@@ -379,3 +379,10 @@ docker-compose.override.yml
 
 # macOS
 .DS_Store
+
+# Frontend (Vite + React)
+node_modules/
+dist/
+dist-ssr/
+.vite/
+*.local
