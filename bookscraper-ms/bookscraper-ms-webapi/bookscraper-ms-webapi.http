@@ -1,0 +1,6 @@
+@bookscraper_ms_webapi_HostAddress = http://localhost:5293
+
+GET {{bookscraper_ms_webapi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
