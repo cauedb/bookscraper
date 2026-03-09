@@ -10,7 +10,7 @@ namespace BookScraper.Infrastructure.Scraping;
 public class BookScraperService : IScraperService
 {
     private static string? _cachedPageSource;
-    private static List<Book>? _cachedBooks;
+    private static readonly Dictionary<string, List<Book>> _booksCache = new(StringComparer.OrdinalIgnoreCase);
 
     private readonly string _targetUrl;
     private readonly ILogger<BookScraperService> _logger;
@@ -40,20 +40,43 @@ public class BookScraperService : IScraperService
         return Task.FromResult(_cachedPageSource);
     }
 
-    public Task<List<Book>> GetAllBooksFromCategoryAsync()
+    public Task<List<Book>> GetAllBooksFromCategoryAsync(string category)
     {
-        if (_cachedBooks is not null)
+        if (_booksCache.TryGetValue(category, out var cached))
         {
-            _logger.LogInformation("Retornando {Count} livros do cache.", _cachedBooks.Count);
-            return Task.FromResult(_cachedBooks);
+            _logger.LogInformation("Retornando {Count} livros da categoria '{Category}' do cache.", cached.Count, category);
+            return Task.FromResult(cached);
         }
 
-        _logger.LogInformation("Iniciando coleta de livros em {Url}", _targetUrl);
+        _logger.LogInformation("Iniciando coleta de livros. Categoria: '{Category}'", category);
 
-        var books = new List<Book>();
         using var driver = SeleniumDriverFactory.Create();
         driver.Navigate().GoToUrl(_targetUrl);
 
+        if (!category.Equals("All", StringComparison.OrdinalIgnoreCase))
+        {
+            var categoryLinks = driver.FindElements(By.CssSelector("div.side_categories ul li a"));
+
+            var categoryLink = categoryLinks.FirstOrDefault(el =>
+                el.Text.Trim().Equals(category, StringComparison.OrdinalIgnoreCase));
+
+            if (categoryLink is null)
+                throw new InvalidOperationException($"Categoria '{category}' não encontrada.");
+
+            categoryLink.Click();
+            _logger.LogInformation("Navegando para a categoria '{Category}'.", category);
+        }
+
+        var books = CollectAllBooksFromCurrentPage(driver);
+
+        _booksCache[category] = books;
+        _logger.LogInformation("Coleta concluída. {Count} livros armazenados para a categoria '{Category}'.", books.Count, category);
+        return Task.FromResult(books);
+    }
+
+    private List<Book> CollectAllBooksFromCurrentPage(IWebDriver driver)
+    {
+        var books = new List<Book>();
         var pageNumber = 1;
 
         while (true)
@@ -82,9 +105,7 @@ public class BookScraperService : IScraperService
                     .FindElement(By.CssSelector("p[class*='star-rating']"))
                     .GetAttribute("class") ?? string.Empty;
 
-                var ratingClasses = ratingAttribute.Split(' ');
-
-                var ratingText = ratingClasses.Last();
+                var ratingText = ratingAttribute.Split(' ').Last();
 
                 if (!Enum.TryParse<eRating>(ratingText, out var rating))
                     throw new InvalidOperationException($"Valor de rating inválido encontrado: '{ratingText}'");
@@ -108,8 +129,6 @@ public class BookScraperService : IScraperService
             pageNumber++;
         }
 
-        _cachedBooks = books;
-        _logger.LogInformation("Coleta concluída. {Count} livros armazenados em memória.", books.Count);
-        return Task.FromResult(_cachedBooks);
+        return books;
     }
 }

@@ -17,16 +17,24 @@ public class ScraperController : ControllerBase
     }
 
     [HttpPost("/scrape")]
-    public async Task<IActionResult> Scrape()
+    public async Task<IActionResult> Scrape([FromQuery] string category = "All")
     {
-        _logger.LogInformation("Requisição POST /scrape recebida.");
+        _logger.LogInformation("Requisição POST /scrape recebida. Categoria: '{Category}'", category);
 
-        var books = await _scraperService.GetAllBooksFromCategoryAsync();
-
-        return Ok(new
+        try
         {
-            message = "Scraping concluído com sucesso.",
-            totalBooks = books.Count
-        });
+            var books = await _scraperService.GetAllBooksFromCategoryAsync(category);
+
+            return Ok(new
+            {
+                message = "Scraping concluído com sucesso.",
+                category,
+                totalBooks = books.Count
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
     }
 }
