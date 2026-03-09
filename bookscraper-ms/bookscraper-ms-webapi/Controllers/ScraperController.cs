@@ -21,12 +21,12 @@ public class ScraperController : ControllerBase
     {
         _logger.LogInformation("Requisição POST /scrape recebida.");
 
-        var pageSource = await _scraperService.ScrapePageSourceAsync();
+        var books = await _scraperService.GetAllBooksFromCategoryAsync();
 
         return Ok(new
         {
             message = "Scraping concluído com sucesso.",
-            htmlLength = pageSource.Length
+            totalBooks = books.Count
         });
     }
 }
