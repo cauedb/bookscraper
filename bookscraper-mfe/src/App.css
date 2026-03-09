@@ -118,6 +118,27 @@ body {
   color: #dc2626;
 }
 
+.category-select {
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background-color: white;
+  color: #111827;
+  cursor: pointer;
+  min-width: 160px;
+}
+
+.category-select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.category-select:focus {
+  outline: 2px solid #2563eb;
+  outline-offset: 1px;
+}
+
 .results-section {
   background-color: white;
   border-radius: 8px;

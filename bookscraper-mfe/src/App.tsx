@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { scrapeAll, getLatestBooks } from './services/api'
+import { useState, useEffect } from 'react'
+import { getCategories, scrapeByCategory, getLatestBooks } from './services/api'
 import { BookTable } from './components/BookTable'
 import type { Book } from './types/book'
 import './App.css'
@@ -8,6 +8,9 @@ type ScrapeStatus = 'idle' | 'loading' | 'success' | 'error'
 type FetchStatus = 'idle' | 'loading' | 'success' | 'error'
 
 function App() {
+  const [categories, setCategories] = useState<string[]>([])
+  const [selectedCategory, setSelectedCategory] = useState<string>('All')
+
   const [scrapeStatus, setScrapeStatus] = useState<ScrapeStatus>('idle')
   const [scrapeError, setScrapeError] = useState<string | null>(null)
 
@@ -15,11 +18,17 @@ function App() {
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [books, setBooks] = useState<Book[]>([])
 
+  useEffect(() => {
+    getCategories()
+      .then(setCategories)
+      .catch(() => setCategories(['All']))
+  }, [])
+
   async function handleScrape() {
     setScrapeStatus('loading')
     setScrapeError(null)
     try {
-      await scrapeAll()
+      await scrapeByCategory(selectedCategory)
       setScrapeStatus('success')
     } catch (err) {
       setScrapeStatus('error')
@@ -51,13 +60,28 @@ function App() {
       <main className="app-main">
         <section className="actions-bar">
           <div className="action-group">
+            <select
+              className="category-select"
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              disabled={scrapeStatus === 'loading' || categories.length === 0}
+            >
+              {categories.length === 0
+                ? <option value="All">Carregando categorias...</option>
+                : categories.map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))
+              }
+            </select>
+
             <button
               className="btn btn-primary"
               onClick={handleScrape}
-              disabled={scrapeStatus === 'loading'}
+              disabled={scrapeStatus === 'loading' || categories.length === 0}
             >
               Iniciar coleta de dados
             </button>
+
             {scrapeStatus === 'loading' && (
               <span className="status-text loading">Coletando Dados....</span>
             )}
