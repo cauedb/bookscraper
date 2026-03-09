@@ -11,6 +11,7 @@ public class BookScraperService : IScraperService
 {
     private static string? _cachedPageSource;
     private static readonly Dictionary<string, List<Book>> _booksCache = new(StringComparer.OrdinalIgnoreCase);
+    private static List<string>? _cachedCategories;
 
     private readonly string _targetUrl;
     private readonly ILogger<BookScraperService> _logger;
@@ -72,6 +73,33 @@ public class BookScraperService : IScraperService
         _booksCache[category] = books;
         _logger.LogInformation("Coleta concluída. {Count} livros armazenados para a categoria '{Category}'.", books.Count, category);
         return Task.FromResult(books);
+    }
+
+    public Task<List<string>> GetCategoriesAsync()
+    {
+        if (_cachedCategories is not null)
+        {
+            _logger.LogInformation("Retornando {Count} categorias do cache.", _cachedCategories.Count);
+            return Task.FromResult(_cachedCategories);
+        }
+
+        _logger.LogInformation("Coletando categorias de {Url}", _targetUrl);
+
+        using var driver = SeleniumDriverFactory.Create();
+        driver.Navigate().GoToUrl(_targetUrl);
+
+        var categoryElements = driver.FindElements(By.CssSelector("div.side_categories ul li a"));
+
+        var categories = categoryElements
+            .Select(el => el.Text.Trim())
+            .Where(text => !string.IsNullOrEmpty(text))
+            .ToList();
+
+        categories.Insert(0, "All");
+
+        _cachedCategories = categories;
+        _logger.LogInformation("Categorias coletadas: {Count} categorias encontradas.", categories.Count);
+        return Task.FromResult(_cachedCategories);
     }
 
     public List<Book> GetCachedBooks()
