@@ -31,8 +31,9 @@ function App() {
       await scrapeByCategory(selectedCategory)
       setScrapeStatus('success')
     } catch (err) {
+      console.error('[Scrape] Erro retornado pela API:', err)
       setScrapeStatus('error')
-      setScrapeError(err instanceof Error ? err.message : 'Erro desconhecido.')
+      setScrapeError('Erro ao coletar os dados.')
     }
   }
 
@@ -45,8 +46,9 @@ function App() {
       setBooks(data)
       setFetchStatus('success')
     } catch (err) {
+      console.error('[Fetch] Erro retornado pela API:', err)
       setFetchStatus('error')
-      setFetchError(err instanceof Error ? err.message : 'Erro desconhecido.')
+      setFetchError('Erro ao recuperar os dados.')
     }
   }
 
