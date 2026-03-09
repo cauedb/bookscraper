@@ -1,3 +1,4 @@
+using BookScraper.Application.DTOs;
 using BookScraper.Domain.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -26,7 +27,7 @@ public class ResultsController : ControllerBase
         if (books.Count == 0)
             return NotFound(new { error = "Nenhum dado disponível. Execute POST /scrape primeiro." });
 
-        return Ok(books);
+        return Ok(books.ToResponseList());
     }
 
     [HttpGet("latest-by-category/{category}")]
@@ -37,7 +38,7 @@ public class ResultsController : ControllerBase
         try
         {
             var books = _scraperService.GetCachedBooksByCategory(category);
-            return Ok(books);
+            return Ok(books.ToResponseList());
         }
         catch (InvalidOperationException ex)
         {
