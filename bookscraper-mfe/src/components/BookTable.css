@@ -1,0 +1,101 @@
+.table-feedback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+  color: #6b7280;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.table-count {
+  margin: 0 0 0.75rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.book-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.book-table th,
+.book-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.book-table th {
+  background-color: #f9fafb;
+  font-weight: 600;
+  color: #374151;
+  white-space: nowrap;
+}
+
+.book-table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+.col-title {
+  max-width: 320px;
+}
+
+.col-price {
+  white-space: nowrap;
+  font-weight: 500;
+  color: #065f46;
+}
+
+.col-availability {
+  white-space: nowrap;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.badge.in-stock {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.badge.out-of-stock {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.rating {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.star {
+  color: #d1d5db;
+  font-size: 1.1rem;
+}
+
+.star.filled {
+  color: #f59e0b;
+}
