@@ -74,6 +74,19 @@ public class BookScraperService : IScraperService
         return Task.FromResult(books);
     }
 
+    public List<Book> GetCachedBooks()
+    {
+        return _booksCache.Values.SelectMany(books => books).ToList();
+    }
+
+    public List<Book> GetCachedBooksByCategory(string category)
+    {
+        if (!_booksCache.TryGetValue(category, out var books))
+            throw new InvalidOperationException($"Nenhum resultado encontrado para a categoria '{category}'. Execute o scraping primeiro.");
+
+        return books;
+    }
+
     private List<Book> CollectAllBooksFromCurrentPage(IWebDriver driver)
     {
         var books = new List<Book>();
