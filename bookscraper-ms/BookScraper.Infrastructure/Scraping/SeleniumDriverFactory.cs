@@ -6,6 +6,9 @@ namespace BookScraper.Infrastructure.Scraping;
 
 public static class SeleniumDriverFactory
 {
+    private static readonly TimeSpan CommandTimeout = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan PageLoadTimeout = TimeSpan.FromSeconds(30);
+
     public static IWebDriver Create()
     {
         var options = new ChromeOptions();
@@ -15,10 +18,16 @@ public static class SeleniumDriverFactory
         options.AddArgument("--disable-gpu");
         options.AddArgument("--window-size=1920,1080");
 
+        IWebDriver driver;
+
         var remoteUrl = Environment.GetEnvironmentVariable("SELENIUM_REMOTE_URL");
         if (!string.IsNullOrEmpty(remoteUrl))
-            return new RemoteWebDriver(new Uri(remoteUrl), options);
+            driver = new RemoteWebDriver(new Uri(remoteUrl), options.ToCapabilities(), CommandTimeout);
+        else
+            driver = new ChromeDriver(ChromeDriverService.CreateDefaultService(), options, CommandTimeout);
 
-        return new ChromeDriver(options);
+        driver.Manage().Timeouts().PageLoad = PageLoadTimeout;
+
+        return driver;
     }
 }

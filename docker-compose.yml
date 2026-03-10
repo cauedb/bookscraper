@@ -12,6 +12,8 @@ services:
       - "5000:8080"
     environment:
       SELENIUM_REMOTE_URL: http://selenium:4444
+    volumes:
+      - ./logs:/app/logs
     depends_on:
       - selenium
     restart: unless-stopped
