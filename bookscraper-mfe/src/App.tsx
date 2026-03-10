@@ -22,6 +22,7 @@ function App() {
   const [pageSize, setPageSize] = useState(20)
 
   const hasFetchedRef = useRef(false)
+  const fetchCategoryRef = useRef('All')
 
   useEffect(() => {
     getCategories()
@@ -32,12 +33,13 @@ function App() {
       })
   }, [])
 
-  async function fetchBooks(p: number, ps: number) {
+  async function fetchBooks(p: number, ps: number, category: string) {
+    fetchCategoryRef.current = category
     setFetchStatus('loading')
     setFetchError(null)
     setBooks([])
     try {
-      const data = await getLatestBooks(p, ps)
+      const data = await getLatestBooks(p, ps, category)
       setBooks(data.items)
       setTotalCount(data.totalCount)
       setFetchStatus('success')
@@ -51,7 +53,7 @@ function App() {
 
   useEffect(() => {
     if (hasFetchedRef.current) {
-      fetchBooks(page, pageSize)
+      fetchBooks(page, pageSize, fetchCategoryRef.current)
     }
   }, [page, pageSize])
 
@@ -71,7 +73,7 @@ function App() {
   function handleFetch() {
     hasFetchedRef.current = false
     setPage(1)
-    fetchBooks(1, pageSize)
+    fetchBooks(1, pageSize, selectedCategory)
   }
 
   function handlePageSizeChange(newSize: number) {

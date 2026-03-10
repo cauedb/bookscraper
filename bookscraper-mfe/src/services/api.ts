@@ -40,12 +40,12 @@ export async function scrapeByCategory(category: string): Promise<void> {
   }
 }
 
-export async function getLatestBooks(page: number, pageSize: number): Promise<PagedResult<Book>> {
-  const response = await fetchWithTimeout(
-    `${BASE_URL}/results/latest?page=${page}&pageSize=${pageSize}`,
-    {},
-    30_000
-  )
+export async function getLatestBooks(page: number, pageSize: number, category: string): Promise<PagedResult<Book>> {
+  const url = category.toLowerCase() === 'all'
+    ? `${BASE_URL}/results/latest?page=${page}&pageSize=${pageSize}`
+    : `${BASE_URL}/results/latest-by-category/${encodeURIComponent(category)}?page=${page}&pageSize=${pageSize}`
+
+  const response = await fetchWithTimeout(url, {}, 30_000)
 
   if (!response.ok) {
     const body = await response.json().catch(() => ({}))
