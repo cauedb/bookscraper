@@ -1,10 +1,19 @@
 services:
+  selenium:
+    image: selenium/standalone-chrome:latest
+    shm_size: 2gb
+    restart: unless-stopped
+
   backend:
     build:
       context: ./bookscraper-ms
       dockerfile: bookscraper-ms-webapi/Dockerfile
     ports:
       - "5000:8080"
+    environment:
+      SELENIUM_REMOTE_URL: http://selenium:4444
+    depends_on:
+      - selenium
     restart: unless-stopped
 
   frontend:

@@ -22,14 +22,14 @@ bookscraper/
 ├── bookscraper-ms/          # Backend .NET (Clean Architecture)
 │   ├── BookScraper.Domain/          # Entidades e interfaces (sem dependências externas)
 │   ├── BookScraper.Application/     # DTOs e mapeamento
-│   ├── BookScraper.Infrastructure/  # Selenium + ChromeDriver
+│   ├── BookScraper.Infrastructure/  # Selenium (RemoteWebDriver / ChromeDriver)
 │   └── bookscraper-ms-webapi/       # API REST (ASP.NET Core)
 ├── bookscraper-mfe/         # Frontend React + TypeScript + Vite
 └── docker-compose.yml
 ```
 
 ### Backend
-- **Stack:** .NET 10 · ASP.NET Core · Selenium 4 · ChromeDriver 145
+- **Stack:** .NET 10 · ASP.NET Core · Selenium 4
 - **Padrão:** Clean Architecture — Domain → Application → Infrastructure → API
 - **Rotas:**
 
@@ -62,6 +62,8 @@ cd bookscraper
 docker compose up --build
 ```
 
+> **Atenção:** o primeiro build pode demorar alguns minutos, pois a imagem `selenium/standalone-chrome` é baixada do Docker Hub (~1 GB). Nas execuções seguintes o processo é significativamente mais rápido.
+
 Após a inicialização:
 
 | Serviço | URL |
@@ -75,7 +77,10 @@ Para parar os serviços:
 docker compose down
 ```
 
-> **Nota:** O build do backend instala o Chrome for Testing 145 automaticamente via Dockerfile — nenhuma dependência adicional é necessária no host.
+O projeto utiliza três containers:
+- **selenium** — `selenium/standalone-chrome`, responsável por executar o Chrome headless
+- **backend** — API .NET que se conecta ao Selenium via `RemoteWebDriver`
+- **frontend** — aplicação React servida pelo Nginx
 
 ---
 
@@ -87,7 +92,7 @@ docker compose down
 |---|---|
 | [.NET SDK](https://dotnet.microsoft.com/download) | 10.0+ |
 | [Node.js](https://nodejs.org/) | 18+ |
-| Google Chrome | 145 (compatível com o ChromeDriver do projeto) |
+| Google Chrome | qualquer versão recente (ChromeDriver é gerenciado automaticamente) |
 
 ### Backend
 
