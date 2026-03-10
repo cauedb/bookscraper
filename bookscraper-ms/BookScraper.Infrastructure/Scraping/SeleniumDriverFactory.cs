@@ -5,9 +5,14 @@ namespace BookScraper.Infrastructure.Scraping;
 
 public static class SeleniumDriverFactory
 {
+    private const string DockerChromePath = "/opt/chrome/chrome";
+
     public static IWebDriver Create()
     {
         var options = new ChromeOptions();
+
+        if (File.Exists(DockerChromePath))
+            options.BinaryLocation = DockerChromePath;
 
         options.AddArgument("--headless");
         options.AddArgument("--no-sandbox");
