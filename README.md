@@ -20,19 +20,19 @@ Aplicação full-stack que coleta informações de livros do site público [book
 
 ```
 bookscraper/
-├── bookscraper-ms/          # Backend .NET (Clean Architecture)
-│   ├── BookScraper.Domain/          # Entidades e interfaces (sem dependências externas)
-│   ├── BookScraper.Application/     # DTOs e mapeamento
-│   ├── BookScraper.Infrastructure/  # Selenium (RemoteWebDriver / ChromeDriver)
-│   └── bookscraper-ms-webapi/       # API REST (ASP.NET Core + Serilog)
-├── bookscraper-mfe/         # Frontend React + TypeScript + Vite
-├── logs/                    # Logs do backend (gerado automaticamente)
+├── bookscraper-ms/                  # Backend .NET (projeto único)
+│   └── bookscraper-ms-webapi/
+│       ├── Models/                  # Book record
+│       ├── Scraping/                # BookScraperService + SeleniumDriverFactory
+│       └── Program.cs               # Minimal API — todos os endpoints
+├── bookscraper-mfe/                 # Frontend React + TypeScript + Vite
+├── logs/                            # Logs do backend (gerado automaticamente)
 └── docker-compose.yml
 ```
 
 ### Backend
-- **Stack:** .NET 10 · ASP.NET Core · Selenium 4 · Serilog
-- **Padrão:** Clean Architecture — Domain → Application → Infrastructure → API
+- **Stack:** .NET 10 · ASP.NET Core Minimal API · Selenium 4 · Serilog
+- **Padrão:** projeto único e plano — sem camadas, sem controllers
 - **Rotas:**
 
 | Método | Rota | Descrição |
