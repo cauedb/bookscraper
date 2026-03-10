@@ -10,8 +10,9 @@ Aplicação full-stack que coleta informações de livros do site público [book
 - **Filtro por categoria** — lista as categorias disponíveis no site e permite coletar apenas os livros de uma delas
 - **Cache em memória** — resultados ficam armazenados no backend após o scraping; consultas GET nunca re-disparam o Selenium
 - **Paginação automática** — o scraper navega por todas as páginas de cada categoria até coletar todos os livros
-- **Tabela de resultados** — exibe título, preço, avaliação (1–5) e disponibilidade de cada livro
+- **Tabela paginada** — exibe título, preço, avaliação (1–5) e disponibilidade; navegação por páginas com 20, 40 ou 50 itens por página
 - **Feedback de erros** — mensagens amigáveis na UI, com detalhes técnicos apenas no console do browser
+- **Log em arquivo** — logs do backend gravados em arquivo rotativo diário, acessíveis na pasta `./logs/`
 
 ---
 
@@ -23,13 +24,14 @@ bookscraper/
 │   ├── BookScraper.Domain/          # Entidades e interfaces (sem dependências externas)
 │   ├── BookScraper.Application/     # DTOs e mapeamento
 │   ├── BookScraper.Infrastructure/  # Selenium (RemoteWebDriver / ChromeDriver)
-│   └── bookscraper-ms-webapi/       # API REST (ASP.NET Core)
+│   └── bookscraper-ms-webapi/       # API REST (ASP.NET Core + Serilog)
 ├── bookscraper-mfe/         # Frontend React + TypeScript + Vite
+├── logs/                    # Logs do backend (gerado automaticamente)
 └── docker-compose.yml
 ```
 
 ### Backend
-- **Stack:** .NET 10 · ASP.NET Core · Selenium 4
+- **Stack:** .NET 10 · ASP.NET Core · Selenium 4 · Serilog
 - **Padrão:** Clean Architecture — Domain → Application → Infrastructure → API
 - **Rotas:**
 
@@ -37,12 +39,12 @@ bookscraper/
 |---|---|---|
 | GET | `/health` | Health check |
 | POST | `/scrape?category=All` | Inicia scraping (categoria opcional, padrão `All`) |
-| GET | `/results/latest` | Retorna todos os livros coletados |
-| GET | `/results/latest-by-category/{category}` | Retorna livros de uma categoria |
+| GET | `/results/latest?page=1&pageSize=20` | Retorna livros paginados |
+| GET | `/results/latest-by-category/{category}` | Retorna livros de uma categoria paginados |
 
 ### Frontend
 - **Stack:** React 18 · TypeScript · Vite · Nginx (produção)
-- Consome a API REST do backend e exibe os dados em tabela
+- Consome a API REST do backend e exibe os dados em tabela paginada
 
 ---
 
@@ -81,6 +83,38 @@ O projeto utiliza três containers:
 - **selenium** — `selenium/standalone-chrome`, responsável por executar o Chrome headless
 - **backend** — API .NET que se conecta ao Selenium via `RemoteWebDriver`
 - **frontend** — aplicação React servida pelo Nginx
+
+---
+
+## Logs
+
+O backend utiliza **Serilog** com dois destinos simultâneos: console e arquivo.
+
+### Com Docker
+
+Os logs são gravados no container em `/app/logs/` e mapeados via volume para a pasta `./logs/` no host. Os arquivos são rotativos por dia e mantidos por 7 dias.
+
+```bash
+# Listar arquivos de log gerados
+ls logs/
+
+# Acompanhar o log em tempo real
+tail -f logs/bookscraper-<YYYYMMDD>.log
+
+# Ou via Docker (saída do container)
+docker compose logs -f backend
+```
+
+### Sem Docker
+
+Os logs são gravados na pasta `logs/` dentro do diretório `bookscraper-ms/bookscraper-ms-webapi/`, criada automaticamente na primeira execução.
+
+```bash
+# Acompanhar o log em tempo real
+tail -f bookscraper-ms/bookscraper-ms-webapi/logs/bookscraper-<YYYYMMDD>.log
+```
+
+> O path do arquivo de log pode ser alterado em `appsettings.json`, chave `Serilog.WriteTo[File].Args.path`.
 
 ---
 

@@ -26,7 +26,10 @@ function App() {
   useEffect(() => {
     getCategories()
       .then(setCategories)
-      .catch(() => setCategories(['All']))
+      .catch((err) => {
+        console.error('[Categories] Erro ao carregar categorias:', err)
+        setCategories(['All'])
+      })
   }, [])
 
   async function fetchBooks(p: number, ps: number) {

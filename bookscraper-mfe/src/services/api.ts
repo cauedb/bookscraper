@@ -2,8 +2,22 @@ import type { Book, PagedResult } from '../types/book'
 
 const BASE_URL = import.meta.env.VITE_API_URL as string
 
+async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    return await fetch(url, { ...options, signal: controller.signal })
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError')
+      throw new Error(`A requisição excedeu o tempo limite de ${Math.round(timeoutMs / 1000)}s.`)
+    throw err
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 export async function getCategories(): Promise<string[]> {
-  const response = await fetch(`${BASE_URL}/categories`)
+  const response = await fetchWithTimeout(`${BASE_URL}/categories`, {}, 30_000)
 
   if (!response.ok) {
     const body = await response.json().catch(() => ({}))
@@ -14,9 +28,11 @@ export async function getCategories(): Promise<string[]> {
 }
 
 export async function scrapeByCategory(category: string): Promise<void> {
-  const response = await fetch(`${BASE_URL}/scrape?category=${encodeURIComponent(category)}`, {
-    method: 'POST',
-  })
+  const response = await fetchWithTimeout(
+    `${BASE_URL}/scrape?category=${encodeURIComponent(category)}`,
+    { method: 'POST' },
+    300_000
+  )
 
   if (!response.ok) {
     const body = await response.json().catch(() => ({}))
@@ -25,7 +41,11 @@ export async function scrapeByCategory(category: string): Promise<void> {
 }
 
 export async function getLatestBooks(page: number, pageSize: number): Promise<PagedResult<Book>> {
-  const response = await fetch(`${BASE_URL}/results/latest?page=${page}&pageSize=${pageSize}`)
+  const response = await fetchWithTimeout(
+    `${BASE_URL}/results/latest?page=${page}&pageSize=${pageSize}`,
+    {},
+    30_000
+  )
 
   if (!response.ok) {
     const body = await response.json().catch(() => ({}))
