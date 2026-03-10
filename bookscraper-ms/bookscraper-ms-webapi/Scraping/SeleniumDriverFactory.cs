@@ -2,7 +2,7 @@ using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Remote;
 
-namespace BookScraper.Infrastructure.Scraping;
+namespace BookScraper.Scraping;
 
 public static class SeleniumDriverFactory
 {

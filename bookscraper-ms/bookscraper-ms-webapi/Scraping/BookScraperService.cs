@@ -1,17 +1,16 @@
-using BookScraper.Domain.Entities;
-using BookScraper.Domain.Enums;
-using BookScraper.Domain.Interfaces;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using OpenQA.Selenium;
 
-namespace BookScraper.Infrastructure.Scraping;
+namespace BookScraper.Scraping;
 
-public class BookScraperService : IScraperService
+public class BookScraperService
 {
-    private static string? _cachedPageSource;
     private static readonly Dictionary<string, List<Book>> _booksCache = new(StringComparer.OrdinalIgnoreCase);
     private static List<string>? _cachedCategories;
+
+    private static readonly Dictionary<string, int> _ratingMap = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["One"] = 1, ["Two"] = 2, ["Three"] = 3, ["Four"] = 4, ["Five"] = 5
+    };
 
     private readonly string _targetUrl;
     private readonly ILogger<BookScraperService> _logger;
@@ -23,25 +22,7 @@ public class BookScraperService : IScraperService
         _logger = logger;
     }
 
-    public Task<string> ScrapePageSourceAsync()
-    {
-        if (_cachedPageSource is not null)
-        {
-            _logger.LogInformation("Retornando página do cache.");
-            return Task.FromResult(_cachedPageSource);
-        }
-
-        _logger.LogInformation("Iniciando scraping de {Url}", _targetUrl);
-
-        using var driver = SeleniumDriverFactory.Create();
-        driver.Navigate().GoToUrl(_targetUrl);
-        _cachedPageSource = driver.PageSource;
-
-        _logger.LogInformation("Scraping concluído. HTML armazenado em memória.");
-        return Task.FromResult(_cachedPageSource);
-    }
-
-    public Task<List<Book>> GetAllBooksFromCategoryAsync(string category)
+    public Task<List<Book>> ScrapeAsync(string category)
     {
         if (_booksCache.TryGetValue(category, out var cached))
         {
@@ -57,7 +38,6 @@ public class BookScraperService : IScraperService
         if (!category.Equals("All", StringComparison.OrdinalIgnoreCase))
         {
             var categoryLinks = driver.FindElements(By.CssSelector("div.side_categories ul li a"));
-
             var categoryLink = categoryLinks.FirstOrDefault(el =>
                 el.Text.Trim().Equals(category, StringComparison.OrdinalIgnoreCase));
 
@@ -65,7 +45,6 @@ public class BookScraperService : IScraperService
                 throw new InvalidOperationException($"Categoria '{category}' não encontrada.");
 
             categoryLink.Click();
-            _logger.LogInformation("Navegando para a categoria '{Category}'.", category);
         }
 
         var books = CollectAllBooksFromCurrentPage(driver);
@@ -98,14 +77,12 @@ public class BookScraperService : IScraperService
         categories.Insert(0, "All");
 
         _cachedCategories = categories;
-        _logger.LogInformation("Categorias coletadas: {Count} categorias encontradas.", categories.Count);
+        _logger.LogInformation("{Count} categorias encontradas.", categories.Count);
         return Task.FromResult(_cachedCategories);
     }
 
-    public List<Book> GetCachedBooks()
-    {
-        return _booksCache.Values.SelectMany(books => books).ToList();
-    }
+    public List<Book> GetCachedBooks() =>
+        _booksCache.Values.SelectMany(books => books).ToList();
 
     public List<Book> GetCachedBooksByCategory(string category)
     {
@@ -142,22 +119,16 @@ public class BookScraperService : IScraperService
 
                 var availability = availabilityText.Contains("In stock", StringComparison.OrdinalIgnoreCase);
 
-                var ratingAttribute = bookElement
+                var ratingClass = bookElement
                     .FindElement(By.CssSelector("p[class*='star-rating']"))
                     .GetAttribute("class") ?? string.Empty;
 
-                var ratingText = ratingAttribute.Split(' ').Last();
+                var ratingText = ratingClass.Split(' ').Last();
 
-                if (!Enum.TryParse<eRating>(ratingText, out var rating))
+                if (!_ratingMap.TryGetValue(ratingText, out var rating))
                     throw new InvalidOperationException($"Valor de rating inválido encontrado: '{ratingText}'");
 
-                books.Add(new Book
-                {
-                    Title = title,
-                    Price = price,
-                    Availability = availability,
-                    Rating = rating
-                });
+                books.Add(new Book(title, price, availability, rating));
             }
 
             var nextLink = driver.FindElements(By.CssSelector("li.next a"));

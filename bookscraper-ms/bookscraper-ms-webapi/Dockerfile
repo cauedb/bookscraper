@@ -3,11 +3,7 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
-# Copia todos os .csproj e restaura dependências (camadas de cache)
 COPY ["bookscraper-ms-webapi/bookscraper-ms-webapi.csproj", "bookscraper-ms-webapi/"]
-COPY ["BookScraper.Domain/BookScraper.Domain.csproj", "BookScraper.Domain/"]
-COPY ["BookScraper.Application/BookScraper.Application.csproj", "BookScraper.Application/"]
-COPY ["BookScraper.Infrastructure/BookScraper.Infrastructure.csproj", "BookScraper.Infrastructure/"]
 RUN dotnet restore "bookscraper-ms-webapi/bookscraper-ms-webapi.csproj"
 
 # Copia o restante do código e publica

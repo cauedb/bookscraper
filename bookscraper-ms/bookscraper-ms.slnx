@@ -1,6 +1,0 @@
-<Solution>
-  <Project Path="bookscraper-ms-webapi/bookscraper-ms-webapi.csproj" />
-  <Project Path="BookScraper.Application/BookScraper.Application.csproj" />
-  <Project Path="BookScraper.Domain/BookScraper.Domain.csproj" />
-  <Project Path="BookScraper.Infrastructure/BookScraper.Infrastructure.csproj" />
-</Solution>
