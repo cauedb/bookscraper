@@ -18,27 +18,43 @@ public class ResultsController : ControllerBase
     }
 
     [HttpGet("latest")]
-    public IActionResult GetLatest()
+    public IActionResult GetLatest([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
-        _logger.LogInformation("Requisição GET /results/latest recebida.");
+        _logger.LogInformation("Requisição GET /results/latest recebida. Page={Page}, PageSize={PageSize}", page, pageSize);
 
         var books = _scraperService.GetCachedBooks();
 
         if (books.Count == 0)
             return NotFound(new { error = "Nenhum dado disponível. Execute POST /scrape primeiro." });
 
-        return Ok(books.ToResponseList());
+        var items = books.Skip((page - 1) * pageSize).Take(pageSize).ToResponseList();
+
+        return Ok(new PagedResult<BookResponse>
+        {
+            Items = items,
+            TotalCount = books.Count,
+            Page = page,
+            PageSize = pageSize
+        });
     }
 
     [HttpGet("latest-by-category/{category}")]
-    public IActionResult GetLatestByCategory(string category)
+    public IActionResult GetLatestByCategory(string category, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
-        _logger.LogInformation("Requisição GET /results/latest-by-category/{Category} recebida.", category);
+        _logger.LogInformation("Requisição GET /results/latest-by-category/{Category} recebida. Page={Page}, PageSize={PageSize}", category, page, pageSize);
 
         try
         {
             var books = _scraperService.GetCachedBooksByCategory(category);
-            return Ok(books.ToResponseList());
+            var items = books.Skip((page - 1) * pageSize).Take(pageSize).ToResponseList();
+
+            return Ok(new PagedResult<BookResponse>
+            {
+                Items = items,
+                TotalCount = books.Count,
+                Page = page,
+                PageSize = pageSize
+            });
         }
         catch (InvalidOperationException ex)
         {

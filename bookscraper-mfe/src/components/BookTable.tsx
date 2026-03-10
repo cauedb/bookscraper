@@ -4,7 +4,14 @@ import './BookTable.css'
 interface Props {
   books: Book[]
   loading: boolean
+  page: number
+  pageSize: number
+  totalCount: number
+  onPageChange: (page: number) => void
+  onPageSizeChange: (size: number) => void
 }
+
+const PAGE_SIZE_OPTIONS = [20, 40, 50]
 
 function RatingStars({ rating }: { rating: number }) {
   return (
@@ -16,7 +23,7 @@ function RatingStars({ rating }: { rating: number }) {
   )
 }
 
-export function BookTable({ books, loading }: Props) {
+export function BookTable({ books, loading, page, pageSize, totalCount, onPageChange, onPageSizeChange }: Props) {
   if (loading) {
     return (
       <div className="table-feedback">
@@ -26,13 +33,34 @@ export function BookTable({ books, loading }: Props) {
     )
   }
 
-  if (books.length === 0) {
+  if (totalCount === 0) {
     return null
   }
 
+  const totalPages = Math.ceil(totalCount / pageSize)
+  const rangeStart = (page - 1) * pageSize + 1
+  const rangeEnd = Math.min(page * pageSize, totalCount)
+
   return (
     <div className="table-wrapper">
-      <p className="table-count">{books.length} livro(s) encontrado(s)</p>
+      <div className="table-toolbar">
+        <span className="table-count">
+          Exibindo {rangeStart} – {rangeEnd} de {totalCount} resultados
+        </span>
+        <div className="page-size-selector">
+          <label htmlFor="page-size">Itens por página:</label>
+          <select
+            id="page-size"
+            value={pageSize}
+            onChange={(e) => onPageSizeChange(Number(e.target.value))}
+          >
+            {PAGE_SIZE_OPTIONS.map((opt) => (
+              <option key={opt} value={opt}>{opt}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       <table className="book-table">
         <thead>
           <tr>
@@ -59,6 +87,40 @@ export function BookTable({ books, loading }: Props) {
           ))}
         </tbody>
       </table>
+
+      <div className="pagination">
+        <button
+          className="btn-page"
+          onClick={() => onPageChange(1)}
+          disabled={page === 1}
+        >
+          «
+        </button>
+        <button
+          className="btn-page"
+          onClick={() => onPageChange(page - 1)}
+          disabled={page === 1}
+        >
+          ‹
+        </button>
+
+        <span className="page-info">Página {page} de {totalPages}</span>
+
+        <button
+          className="btn-page"
+          onClick={() => onPageChange(page + 1)}
+          disabled={page === totalPages}
+        >
+          ›
+        </button>
+        <button
+          className="btn-page"
+          onClick={() => onPageChange(totalPages)}
+          disabled={page === totalPages}
+        >
+          »
+        </button>
+      </div>
     </div>
   )
 }

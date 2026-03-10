@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { getCategories, scrapeByCategory, getLatestBooks } from './services/api'
 import { BookTable } from './components/BookTable'
 import type { Book } from './types/book'
@@ -17,12 +17,40 @@ function App() {
   const [fetchStatus, setFetchStatus] = useState<FetchStatus>('idle')
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [books, setBooks] = useState<Book[]>([])
+  const [totalCount, setTotalCount] = useState(0)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
+
+  const hasFetchedRef = useRef(false)
 
   useEffect(() => {
     getCategories()
       .then(setCategories)
       .catch(() => setCategories(['All']))
   }, [])
+
+  async function fetchBooks(p: number, ps: number) {
+    setFetchStatus('loading')
+    setFetchError(null)
+    setBooks([])
+    try {
+      const data = await getLatestBooks(p, ps)
+      setBooks(data.items)
+      setTotalCount(data.totalCount)
+      setFetchStatus('success')
+      hasFetchedRef.current = true
+    } catch (err) {
+      console.error('[Fetch] Erro retornado pela API:', err)
+      setFetchStatus('error')
+      setFetchError('Erro ao recuperar os dados.')
+    }
+  }
+
+  useEffect(() => {
+    if (hasFetchedRef.current) {
+      fetchBooks(page, pageSize)
+    }
+  }, [page, pageSize])
 
   async function handleScrape() {
     setScrapeStatus('loading')
@@ -37,19 +65,15 @@ function App() {
     }
   }
 
-  async function handleFetch() {
-    setFetchStatus('loading')
-    setFetchError(null)
-    setBooks([])
-    try {
-      const data = await getLatestBooks()
-      setBooks(data)
-      setFetchStatus('success')
-    } catch (err) {
-      console.error('[Fetch] Erro retornado pela API:', err)
-      setFetchStatus('error')
-      setFetchError('Erro ao recuperar os dados.')
-    }
+  function handleFetch() {
+    hasFetchedRef.current = false
+    setPage(1)
+    fetchBooks(1, pageSize)
+  }
+
+  function handlePageSizeChange(newSize: number) {
+    setPage(1)
+    setPageSize(newSize)
   }
 
   return (
@@ -110,7 +134,15 @@ function App() {
         </section>
 
         <section className="results-section">
-          <BookTable books={books} loading={fetchStatus === 'loading'} />
+          <BookTable
+            books={books}
+            loading={fetchStatus === 'loading'}
+            page={page}
+            pageSize={pageSize}
+            totalCount={totalCount}
+            onPageChange={setPage}
+            onPageSizeChange={handlePageSizeChange}
+          />
         </section>
       </main>
     </div>
